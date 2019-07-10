@@ -14,11 +14,6 @@ class SudokuSolver
 		
 		friend ostream& operator<<(ostream& os, const Variable& v)
 		{
-			//for (int digit : v.domain)
-			//{
-				//os << digit;
-			//}
-			//return os;
 			return os << v.x;
 		}
 	};
@@ -261,26 +256,35 @@ public:
 	
 
 private:
-	bool IsConsistent()
+	bool IsConsistent(int max_i, int max_j)
 	{
-		for (int i = 0; i < 9; ++i)
+		int x = v[max_i][max_j].x;
+		
+		for (int i = 0; i < max_i; ++i)
 		{
-			for (int j = 0; j < 9; ++j)
+			if (v[i][max_j].x == x)
 			{
-				for (int i2 = i; i2 < 9; ++i2)
+				return false;
+			}
+		}
+		
+		for (int j = 0; j < max_j; ++j)
+		{
+			if (v[max_i][j].x == x)
+			{
+				return false;
+			}
+		}
+
+		for (int i = max_i / 3 * 3; i <= max_i; ++i)
+		{
+			for (int j = max_j / 3 * 3; j <= max_j; ++j)
+			{
+				if ((i != max_i) && (j != max_j))
 				{
-					for (int j2 = j; j2 < 9; ++j2)
+					if (v[i][j].x == x)
 					{
-						if ((i2 == i) && (j2 == j))
-							continue;
-						
-						if ((i2 == i) || (j2 == j) || ((i2 / 3 == i / 3) && (j2 / 3 == j / 3)))
-						{
-							if (v[i][j].x == v[i2][j2].x)
-							{
-								return false;
-							}
-						}
+						return false;
 					}
 				}
 			}
@@ -292,11 +296,9 @@ private:
 	
 	bool Search(int i, int j)
 	{
-		cout << "Checking i = " << i << ", j = " << j << endl;
-		
 		if (i == 9)
 		{
-			return IsConsistent();
+			return true;
 		}
 		
 		Variable& var = v[i][j];
@@ -307,6 +309,11 @@ private:
 		for (int x : var.domain)
 		{
 			var.x = x;
+			if (!IsConsistent(i, j))
+			{
+				continue;
+			}
+			
 			int next_i = (j == 8) ? i + 1 : i;
 			int next_j = (j + 1) % 9;
 			if (Search(next_i, next_j))
@@ -355,7 +362,7 @@ int main()
 		"89 6     "
 	};
 	SudokuSolver ss(board);
-	
+		
 	if (ss.Search())
 	{
 		cout << ss;
