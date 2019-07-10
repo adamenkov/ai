@@ -9,16 +9,17 @@ class SudokuSolver
 {
 	struct Variable
 	{
-		int index;
+		int x;
 		vector<int> domain;
 		
 		friend ostream& operator<<(ostream& os, const Variable& v)
 		{
-			for (int digit : v.domain)
-			{
-				os << digit;
-			}
-			return os;
+			//for (int digit : v.domain)
+			//{
+				//os << digit;
+			//}
+			//return os;
+			return os << v.x;
 		}
 	};
 	
@@ -48,10 +49,12 @@ public:
 				}
 			}
 		}
+		
+		Inference();
 	}
 	
 	
-	bool Inference()
+	void Inference()
 	{
 		bool changed;
 		do
@@ -63,7 +66,6 @@ public:
 				for (int j = 0; j < 9; ++j)
 				{
 					vector<int>& d = v[i][j].domain;
-					
 					if (d.size() > 1)
 					{
 						for (int digit : d)
@@ -235,8 +237,12 @@ public:
 				}
 			}
 		} while (changed);
-		
-		return true;
+	}
+	
+	
+	bool Search()
+	{
+		return Search(0, 0);
 	}
 	
 
@@ -255,6 +261,64 @@ public:
 	
 
 private:
+	bool IsConsistent()
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			for (int j = 0; j < 9; ++j)
+			{
+				for (int i2 = i; i2 < 9; ++i2)
+				{
+					for (int j2 = j; j2 < 9; ++j2)
+					{
+						if ((i2 == i) && (j2 == j))
+							continue;
+						
+						if ((i2 == i) || (j2 == j) || ((i2 / 3 == i / 3) && (j2 / 3 == j / 3)))
+						{
+							if (v[i][j].x == v[i2][j2].x)
+							{
+								return false;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	
+	bool Search(int i, int j)
+	{
+		cout << "Checking i = " << i << ", j = " << j << endl;
+		
+		if (i == 9)
+		{
+			return IsConsistent();
+		}
+		
+		Variable& var = v[i][j];
+		vector<int>& domain = var.domain;
+		if (domain.empty())
+			return false;
+			
+		for (int x : var.domain)
+		{
+			var.x = x;
+			int next_i = (j == 8) ? i + 1 : i;
+			int next_j = (j + 1) % 9;
+			if (Search(next_i, next_j))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	
 	static bool try_remove(vector<int>& d, int digit)
 	{
 		if (d.size() != 1)
@@ -292,9 +356,14 @@ int main()
 	};
 	SudokuSolver ss(board);
 	
-	ss.Inference();
-		
-	cout << ss;
+	if (ss.Search())
+	{
+		cout << ss;
+	}
+	else
+	{
+		cout << "No solution" << endl;
+	}	
 	
 	auto end = chrono::system_clock::now();
 	auto elapsed = chrono::duration_cast<chrono::microseconds>(end - start).count();
